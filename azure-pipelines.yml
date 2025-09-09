@@ -14,6 +14,7 @@ imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
 resourceGroupName: 'kml_rg_main-3cfd5ff580514130' # The Azure resource group where ACI will be deployed
 aciContainerGroupName: 'hello-world-app-container' # The name for your ACI Container Group
 location: 'YOUR_AZURE_REGION' # The Azure region (e.g., westus2)
+registryPassword: '' # You must set this variable as a secret in Azure DevOps
 
 stages:
 
