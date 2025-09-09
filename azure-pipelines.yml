@@ -1,6 +1,6 @@
 This pipeline will trigger automatically on every push to the main branch
 
-trigger:
+trigger;
 
     main
 
