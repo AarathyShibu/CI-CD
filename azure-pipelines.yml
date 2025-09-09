@@ -6,12 +6,14 @@ trigger:
 
 Define variables for your Azure resources
 IMPORTANT: Replace these placeholder values with your own!
+Note: In a KodeKloud lab, you will likely need to create the service connection manually due to
+permission limitations.
 
 variables:
-azureServiceConnection: 'YOUR_AZURE_SERVICE_CONNECTION_NAME' # The name of your Azure DevOps Service Connection
-acrName: 'YOUR_AZURE_CONTAINER_REGISTRY_NAME' # Your Azure Container Registry name (e.g., myregistry123)
+azureServiceConnection: 'manual-azure-connection' # The name of your Azure DevOps Service Connection
+acrName: 'myacr2025' # Your Azure Container Registry name (e.g., myregistry123)
 imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
-resourceGroupName: 'YOUR_RESOURCE_GROUP_NAME' # The Azure resource group where ACI will be deployed
+resourceGroupName: 'kml_rg_main-3cfd5ff580514130' # The Azure resource group where ACI will be deployed
 aciContainerGroupName: 'hello-world-app-container' # The name for your ACI Container Group
 location: 'YOUR_AZURE_REGION' # The Azure region (e.g., westus2)
 
@@ -55,25 +57,25 @@ stages:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-            az container create 
+            az container create
 
-            --resource-group $(resourceGroupName) 
+            --resource-group $(resourceGroupName)
 
             --name (aciContainerGroupName) \
-            --image $(acrName).azurecr.io/$(aciContainerGroupName):(Build.BuildId) 
+            --image $(acrName).azurecr.io/$(aciContainerGroupName):(Build.BuildId)
 
-            --dns-name-label $(aciContainerGroupName) 
+            --dns-name-label $(aciContainerGroupName)
 
-            --ports 80 
+            --ports 80
 
-            --location $(location) 
+            --location $(location)
 
-            --cpu 1 
+            --cpu 1
 
-            --memory 1.5 
+            --memory 1.5
 
-            --registry-login-server $(acrName).azurecr.io 
+            --registry-login-server $(acrName).azurecr.io
 
-            --registry-username $(acrName) 
+            --registry-username $(acrName)
 
             --registry-password $(registryPassword)
