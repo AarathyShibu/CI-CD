@@ -1,0 +1,79 @@
+This pipeline will trigger automatically on every push to the main branch
+
+trigger:
+
+    main
+
+Define variables for your Azure resources
+IMPORTANT: Replace these placeholder values with your own!
+
+variables:
+azureServiceConnection: 'YOUR_AZURE_SERVICE_CONNECTION_NAME' # The name of your Azure DevOps Service Connection
+acrName: 'YOUR_AZURE_CONTAINER_REGISTRY_NAME' # Your Azure Container Registry name (e.g., myregistry123)
+imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
+resourceGroupName: 'YOUR_RESOURCE_GROUP_NAME' # The Azure resource group where ACI will be deployed
+aciContainerGroupName: 'hello-world-app-container' # The name for your ACI Container Group
+location: 'YOUR_AZURE_REGION' # The Azure region (e.g., westus2)
+
+stages:
+
+    stage: BuildAndPush
+    displayName: 'Build and Push Docker Image'
+    jobs:
+
+        job: BuildAndPushJob
+        displayName: 'Build and Push'
+        pool:
+        vmImage: 'ubuntu-latest'
+        steps:
+
+            task: Docker@2
+            displayName: 'Build and Push Image to ACR'
+            inputs:
+            command: 'buildAndPush'
+            containerRegistry: '(azureServiceConnection)′repository:′(acrName)/$(aciContainerGroupName)' # The image will be pushed to acrName/container-group-name
+            tags: |
+            $(Build.BuildId)
+            latest
+            Dockerfile: 'Dockerfile'
+
+    stage: Deploy
+    displayName: 'Deploy to Azure Container Instances'
+    dependsOn: BuildAndPush
+    jobs:
+
+        job: DeployJob
+        displayName: 'Deploy to ACI'
+        pool:
+        vmImage: 'ubuntu-latest'
+        steps:
+
+            task: AzureCLI@2
+            displayName: 'Deploy Container to ACI'
+            inputs:
+            azureSubscription: '$(azureServiceConnection)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+            az container create 
+
+            --resource-group $(resourceGroupName) 
+
+            --name (aciContainerGroupName) \
+            --image $(acrName).azurecr.io/$(aciContainerGroupName):(Build.BuildId) 
+
+            --dns-name-label $(aciContainerGroupName) 
+
+            --ports 80 
+
+            --location $(location) 
+
+            --cpu 1 
+
+            --memory 1.5 
+
+            --registry-login-server $(acrName).azurecr.io 
+
+            --registry-username $(acrName) 
+
+            --registry-password $(registryPassword)
