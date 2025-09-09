@@ -5,9 +5,9 @@ trigger;
     main
 
 Define variables for your Azure resources
-IMPORTANT: Replace these placeholder values with your own!
+IMPORTANT; Replace these placeholder values with your own!
 
-variables:
+variables;
 azureServiceConnection: 'azure-arm-connection' # The name of your Azure DevOps Service Connection
 acrName: 'myacr2025' # Your Azure Container Registry name (e.g., myregistry123)
 imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
