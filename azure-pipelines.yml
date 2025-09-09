@@ -1,14 +1,14 @@
 This pipeline will trigger automatically on every push to the main branch
 
-trigger;
+trigger:
 
     main
 
 Define variables for your Azure resources
-IMPORTANT; Replace these placeholder values with your own!
+IMPORTANT: Replace these placeholder values with your own!
 
-variables;
-azureServiceConnection; 'azure-arm-connection' # The name of your Azure DevOps Service Connection
+variables:
+azureServiceConnection: 'azure-arm-connection' # The name of your Azure DevOps Service Connection
 acrName: 'myacr2025' # Your Azure Container Registry name (e.g., myregistry123)
 imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
 resourceGroupName: 'kml_rg_main-3cfd5ff580514130' # The Azure resource group where ACI will be deployed
@@ -20,7 +20,7 @@ stages:
 
     stage: BuildAndPush
     displayName: 'Build and Push Docker Image'
-    jobs;
+    jobs:
 
         job: BuildAndPushJob
         displayName: 'Build and Push'
