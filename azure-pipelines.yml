@@ -6,11 +6,9 @@ trigger:
 
 Define variables for your Azure resources
 IMPORTANT: Replace these placeholder values with your own!
-Note: In a KodeKloud lab, you will likely need to create the service connection manually due to
-permission limitations.
 
 variables:
-azureServiceConnection: 'manual-azure-connection' # The name of your Azure DevOps Service Connection
+azureServiceConnection: 'azure-arm-connection' # The name of your Azure DevOps Service Connection
 acrName: 'myacr2025' # Your Azure Container Registry name (e.g., myregistry123)
 imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
 resourceGroupName: 'kml_rg_main-3cfd5ff580514130' # The Azure resource group where ACI will be deployed
@@ -57,25 +55,25 @@ stages:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-            az container create
+            az container create 
 
-            --resource-group $(resourceGroupName)
+            --resource-group $(resourceGroupName) 
 
             --name (aciContainerGroupName) \
-            --image $(acrName).azurecr.io/$(aciContainerGroupName):(Build.BuildId)
+            --image $(acrName).azurecr.io/$(aciContainerGroupName):(Build.BuildId) 
 
-            --dns-name-label $(aciContainerGroupName)
+            --dns-name-label $(aciContainerGroupName) 
 
-            --ports 80
+            --ports 80 
 
-            --location $(location)
+            --location $(location) 
 
-            --cpu 1
+            --cpu 1 
 
-            --memory 1.5
+            --memory 1.5 
 
-            --registry-login-server $(acrName).azurecr.io
+            --registry-login-server $(acrName).azurecr.io 
 
-            --registry-username $(acrName)
+            --registry-username $(acrName) 
 
             --registry-password $(registryPassword)
