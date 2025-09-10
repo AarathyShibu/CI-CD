@@ -2,55 +2,45 @@ trigger:
 - main
 
 variables:
-  acrName: 'myazureacr2'  # ACR name
-  acrUsername: 'myazureacr2' # admin username from ACR
-  aciContainerGroupName: 'hello-world-app-container'
+  azureServiceConnection: 'azure-manual-connection'  # Azure RM connection for ACI deploy
+  acrName: 'myazureacr2'
   resourceGroupName: 'kml_rg_main-c706ef5731324a43'
-  location: 'westus2'
-  imageName: 'hello-world-app:$(Build.BuildId)' 
+  aciContainerGroupName: 'hello-world-app-container'
+  location: 'westus2'  # or your region
+  registryPassword: '$(acrPassword)'  # secret variable in pipeline
 
 stages:
 - stage: BuildAndPush
   displayName: 'Build and Push Docker Image'
   jobs:
   - job: BuildAndPushJob
-    displayName: 'Build and Push'
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - task: Docker@2
-      displayName: 'Login to ACR'
+      displayName: 'Build and Push Image to ACR'
       inputs:
-        command: 'login'
-        containerRegistry: '$(acrName).azurecr.io'
-        username: '$(acrUsername)'
-        password: '$(acrPassword)'  # define as secret pipeline variable
-    - task: Docker@2
-      displayName: 'Build and Push Image'
-      inputs:
-        command: 'buildAndPush'
+        command: buildAndPush
+        containerRegistry: 'my-acr-connection'   # service connection name
         repository: '$(aciContainerGroupName)'
         dockerfile: 'Dockerfile'
         tags: |
           $(Build.BuildId)
           latest
-        containerRegistry: '$(acrName).azurecr.io'
 
 - stage: Deploy
-  displayName: 'Deploy to Azure Container Instances'
   dependsOn: BuildAndPush
   jobs:
   - job: DeployJob
-    displayName: 'Deploy to ACI'
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - task: AzureCLI@2
       displayName: 'Deploy Container to ACI'
       inputs:
-        azureSubscription: 'azure-manual-connection'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: bash
+        scriptLocation: inlineScript
         inlineScript: |
           az container create \
             --resource-group $(resourceGroupName) \
@@ -62,5 +52,5 @@ stages:
             --cpu 1 \
             --memory 1.5 \
             --registry-login-server $(acrName).azurecr.io \
-            --registry-username $(acrUsername) \
-            --registry-password $(acrPassword)
+            --registry-username $(acrName) \
+            --registry-password $(registryPassword)
