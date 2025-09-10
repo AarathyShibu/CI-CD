@@ -21,7 +21,7 @@ stages:
       displayName: 'Build and Push Image to ACR'
       inputs:
         command: buildAndPush
-        containerRegistry: 'my-acr-connection'   # service connection name
+        containerRegistry: 'azure-arm-connection'   # service connection name
         repository: '$(aciContainerGroupName)'
         dockerfile: 'Dockerfile'
         tags: |
