@@ -1,80 +1,63 @@
-This pipeline will trigger automatically on every push to the main branch
-
+# Trigger on every push to the main branch
 trigger:
+  - main
 
-    main
-
-Define variables for your Azure resources
-IMPORTANT: Replace these placeholder values with your own!
-
+# Variables
 variables:
-azureServiceConnection: 'azure-arm-connection' # The name of your Azure DevOps Service Connection
-acrName: 'myacr2025' # Your Azure Container Registry name (e.g., myregistry123)
-imageName: 'hello-world-app:$(Build.BuildId)' # The name for your Docker image
-resourceGroupName: 'kml_rg_main-3cfd5ff580514130' # The Azure resource group where ACI will be deployed
-aciContainerGroupName: 'hello-world-app-container' # The name for your ACI Container Group
-location: 'YOUR_AZURE_REGION' # The Azure region (e.g., westus2)
-registryPassword: '' # You must set this variable as a secret in Azure DevOps
+  azureServiceConnection: 'azure-arm-connection'           # Name of your Azure DevOps Service Connection
+  acrName: 'myazureacr2'                                   # Your Azure Container Registry name
+  imageName: 'hello-world-app:$(Build.BuildId)'            # Image name with build ID
+  resourceGroupName: 'kml_rg_main-c706ef5731324a43'        # Resource Group
+  aciContainerGroupName: 'hello-world-app-container'       # ACI Container Group name
+  location: 'westus2'                                      # Azure region
+  registryPassword: ''                                     # Set this as a secret variable in Azure DevOps
 
 stages:
 
-    stage: BuildAndPush
-    displayName: 'Build and Push Docker Image'
-    jobs:
+- stage: BuildAndPush
+  displayName: 'Build and Push Docker Image'
+  jobs:
+  - job: BuildAndPushJob
+    displayName: 'Build and Push'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Docker@2
+      displayName: 'Build and Push Image to ACR'
+      inputs:
+        command: 'buildAndPush'
+        containerRegistry: '$(azureServiceConnection)'
+        repository: '$(aciContainerGroupName)'             # Repo in ACR
+        dockerfile: 'Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
 
-        job: BuildAndPushJob
-        displayName: 'Build and Push'
-        pool:
-        vmImage: 'ubuntu-latest'
-        steps:
-
-            task: Docker@2
-            displayName: 'Build and Push Image to ACR'
-            inputs:
-            command: 'buildAndPush'
-            containerRegistry: '(azureServiceConnection)′repository:′(acrName)/$(aciContainerGroupName)' # The image will be pushed to acrName/container-group-name
-            tags: |
-            $(Build.BuildId)
-            latest
-            Dockerfile: 'Dockerfile'
-
-    stage: Deploy
-    displayName: 'Deploy to Azure Container Instances'
-    dependsOn: BuildAndPush
-    jobs:
-
-        job: DeployJob
-        displayName: 'Deploy to ACI'
-        pool:
-        vmImage: 'ubuntu-latest'
-        steps:
-
-            task: AzureCLI@2
-            displayName: 'Deploy Container to ACI'
-            inputs:
-            azureSubscription: '$(azureServiceConnection)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-            az container create 
-
-            --resource-group $(resourceGroupName) 
-
-            --name (aciContainerGroupName) \
-            --image $(acrName).azurecr.io/$(aciContainerGroupName):(Build.BuildId) 
-
-            --dns-name-label $(aciContainerGroupName) 
-
-            --ports 80 
-
-            --location $(location) 
-
-            --cpu 1 
-
-            --memory 1.5 
-
-            --registry-login-server $(acrName).azurecr.io 
-
-            --registry-username $(acrName) 
-
+- stage: Deploy
+  displayName: 'Deploy to Azure Container Instances'
+  dependsOn: BuildAndPush
+  jobs:
+  - job: DeployJob
+    displayName: 'Deploy to ACI'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Deploy Container to ACI'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az container create \
+            --resource-group $(resourceGroupName) \
+            --name $(aciContainerGroupName) \
+            --image $(acrName).azurecr.io/$(aciContainerGroupName):$(Build.BuildId) \
+            --dns-name-label $(aciContainerGroupName) \
+            --ports 80 \
+            --location $(location) \
+            --cpu 1 \
+            --memory 1.5 \
+            --registry-login-server $(acrName).azurecr.io \
+            --registry-username $(acrName) \
             --registry-password $(registryPassword)
