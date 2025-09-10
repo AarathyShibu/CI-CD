@@ -1,19 +1,15 @@
-# Trigger on every push to the main branch
 trigger:
-  - main
+- main
 
-# Variables
 variables:
-  azureServiceConnection: 'azure-arm-connection'           # Name of your Azure DevOps Service Connection
-  acrName: 'myazureacr2'                                   # Your Azure Container Registry name
-  imageName: 'hello-world-app:$(Build.BuildId)'            # Image name with build ID
-  resourceGroupName: 'kml_rg_main-c706ef5731324a43'        # Resource Group
-  aciContainerGroupName: 'hello-world-app-container'       # ACI Container Group name
-  location: 'westus2'                                      # Azure region
-  registryPassword: ''                                     # Set this as a secret variable in Azure DevOps
+  acrName: 'myazureacr2'  # ACR name
+  acrUsername: 'myazureacr2' # admin username from ACR
+  aciContainerGroupName: 'hello-world-app-container'
+  resourceGroupName: 'kml_rg_main-c706ef5731324a43'
+  location: 'westus2'
+  imageName: 'hello-world-app:$(Build.BuildId)' 
 
 stages:
-
 - stage: BuildAndPush
   displayName: 'Build and Push Docker Image'
   jobs:
@@ -23,15 +19,22 @@ stages:
       vmImage: 'ubuntu-latest'
     steps:
     - task: Docker@2
-      displayName: 'Build and Push Image to ACR'
+      displayName: 'Login to ACR'
+      inputs:
+        command: 'login'
+        containerRegistry: '$(acrName).azurecr.io'
+        username: '$(acrUsername)'
+        password: '$(acrPassword)'  # define as secret pipeline variable
+    - task: Docker@2
+      displayName: 'Build and Push Image'
       inputs:
         command: 'buildAndPush'
-        containerRegistry: '$(azureServiceConnection)'
-        repository: '$(aciContainerGroupName)'             # Repo in ACR
+        repository: '$(aciContainerGroupName)'
         dockerfile: 'Dockerfile'
         tags: |
           $(Build.BuildId)
           latest
+        containerRegistry: '$(acrName).azurecr.io'
 
 - stage: Deploy
   displayName: 'Deploy to Azure Container Instances'
@@ -45,7 +48,7 @@ stages:
     - task: AzureCLI@2
       displayName: 'Deploy Container to ACI'
       inputs:
-        azureSubscription: '$(azureServiceConnection)'
+        azureSubscription: 'azure-manual-connection'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -59,5 +62,5 @@ stages:
             --cpu 1 \
             --memory 1.5 \
             --registry-login-server $(acrName).azurecr.io \
-            --registry-username $(acrName) \
-            --registry-password $(registryPassword)
+            --registry-username $(acrUsername) \
+            --registry-password $(acrPassword)
